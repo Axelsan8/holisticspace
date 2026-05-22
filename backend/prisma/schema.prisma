@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  THERAPIST
+  ADMIN
+}
+
+enum TherapySpecialty {
+  YOGA
+  MEDITATION
+  PSYCHOTHERAPY
+  HOLISTIC_HEALING
+  REIKI
+  COACHING
+  NUTRITION
+}
+
+model User {
+  id                 String     @id @default(cuid())
+  email              String     @unique
+  password           String
+  firstName          String
+  lastName           String
+  avatar             String?
+  role               UserRole   @default(CLIENT)
+  isVerified         Boolean    @default(false)
+  isActive           Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  
+  videosCreated      Video[]
+  servicesOffered    Service[]
+  productsCreated    Product[]
+  orders             Order[]
+  
+  @@index([email])
+  @@index([role])
+}
+
+model Video {
+  id                 String     @id @default(cuid())
+  title              String
+  description        String     @db.Text
+  videoUrl           String     @db.Text
+  duration           Int
+  therapistId        String
+  therapist          User       @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+  price              Float
+  views              Int        @default(0)
+  isPublished        Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  
+  @@index([therapistId])
+}
+
+model Service {
+  id                 String     @id @default(cuid())
+  title              String
+  description        String     @db.Text
+  therapistId        String
+  therapist          User       @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+  duration           Int
+  price              Float
+  isActive           Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  
+  @@index([therapistId])
+}
+
+model Product {
+  id                 String     @id @default(cuid())
+  title              String
+  description        String     @db.Text
+  creatorId          String
+  creator            User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  price              Float
+  stock              Int        @default(-1)
+  isActive           Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  orders             Order[]
+  
+  @@index([creatorId])
+}
+
+model Order {
+  id                 String     @id @default(cuid())
+  userId             String
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity           Int
+  totalAmount        Float
+  status             String     @default("PENDING")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  
+  @@index([userId])
+  @@index([productId])
+}
